@@ -11,12 +11,15 @@
 | Linting | ESLint + eslint-plugin-react-hooks | 10.x / 7.x | Catches unused code and hook mistakes. |
 | CI | GitHub Actions | n/a | Lint, test, data checks and build on Ubuntu, Windows and macOS with Node 20 and 22. |
 | Package manager | npm | bundled with Node | `package-lock.json` makes installs reproducible with `npm ci`. |
-| Persistence | Browser localStorage | n/a | Keeps uploaded reports on the user's device without a server. |
+| Persistence | Browser localStorage | n/a | Keeps uploaded reports and food preferences on the user's device without a server. |
+| Nutrient data | USDA SR28 (bundled JSON) | Release 28 | Public-domain nutrient values for every food, so suggestions are computed offline from real numbers. |
+| On-device AI (optional) | @mlc-ai/web-llm | 0.2.85 | Runs a small language model in the browser with WebGPU, in a web worker. Lazy-loaded and off by default. |
 
 ## Not used
 
 - **No backend, database or cloud services.** All processing happens in the browser.
-- **No external APIs or AI services.** The Ask tab is a local rule-based engine, so no API keys are needed.
+- **No external APIs or cloud AI services.** The Ask tab is a local rule-based engine; the optional AI runs on
+  the device. No API keys are needed.
 - **No CSS framework.** Styling is a single hand-written stylesheet (`src/styles.css`) with CSS variables.
 - **No TypeScript.** Data shapes are documented in [DATA_FORMAT.md](DATA_FORMAT.md) and JSDoc comments.
 

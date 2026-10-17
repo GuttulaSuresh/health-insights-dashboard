@@ -1,26 +1,32 @@
-import React from 'react';
 import { Card, SectionTitle } from './ui.jsx';
-import { eatMore } from '../lib/nutrition.js';
 import { NEED_LABEL } from '../content/foods.js';
+import FoodPreferences, { VegMark } from './FoodPreferences.jsx';
 
-export function VegToggle({ vegetarian, setVegetarian }) {
-  return (
-    <label className="toggle">
-      <input type="checkbox" checked={vegetarian} onChange={(e) => setVegetarian(e.target.checked)} />
-      <span className="track" aria-hidden="true"><span className="thumb" /></span>
-      Vegetarian options only
-    </label>
-  );
-}
+const TREND_LABEL = { improving: 'improving', back_in_range: 'back in range', worsening: 'getting worse', new_out: 'newly out of range', unchanged: 'unchanged' };
 
 export function NeedsBar({ model }) {
-  const w = model.foodRecommendations.needs.weights;
+  const { weights: w, trends = {} } = model.foodRecommendations.needs;
   const items = Object.entries(w).sort((a, b) => b[1] - a[1]);
-  if (!items.length) return <p className="muted">No results call for specific food changes; general healthy eating applies.</p>;
+  if (!items.length) return <p className="muted">No results call for specific food changes, so these are general healthy picks.</p>;
   return (
     <div className="needs">
       <span className="muted small">Personalized for {model.profile.name}'s results:</span>
-      {items.map(([n, v]) => <span key={n} className={`pill sev-${v >= 3 ? 'priority' : v === 2 ? 'attention' : 'watch'}`}>{NEED_LABEL[n]}</span>)}
+      {items.map(([n, v]) => (
+        <span key={n} className={`pill sev-${v >= 3 ? 'priority' : v === 2 ? 'attention' : 'watch'}`}>
+          {NEED_LABEL[n]}{trends[n] && <span className={`trend-note ${trends[n]}`}> · {TREND_LABEL[trends[n]]}</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function FoodFacts({ food }) {
+  if (!food.facts?.length && !food.watch?.length) return null;
+  return (
+    <div className="facts">
+      <span className="muted tiny">Per {food.serving}:</span>
+      {food.facts.map((f) => <span key={f} className="fact good">{f}</span>)}
+      {food.watch.map((f) => <span key={f} className="fact watch">{f}</span>)}
     </div>
   );
 }
@@ -57,22 +63,28 @@ export function Plate({ plate }) {
   );
 }
 
-export default function Nutrition({ model, vegetarian, setVegetarian }) {
+export default function Nutrition({ model, prefs, setPrefs }) {
   const fr = model.foodRecommendations;
-  const sections = React.useMemo(() => eatMore(fr.needs, { vegetarian }), [fr.needs, vegetarian]);
   return (
     <div className="stack">
-      <SectionTitle icon="🥗" title={`Food & Nutrition for ${model.profile.name}`} sub="Generated from this profile's lab results. Diet preferences, allergies and medicines are not in the records, so skip anything that does not suit you." right={<VegToggle vegetarian={vegetarian} setVegetarian={setVegetarian} />} />
+      <SectionTitle icon="🥗" title={`Food & Nutrition for ${model.profile.name}`} sub="Ranked from this profile's lab results using USDA nutrient values per serving. Medicines are not in the records, so check big changes with a clinician." />
+      <FoodPreferences prefs={prefs} setPrefs={setPrefs} name={model.profile.name} />
       <NeedsBar model={model} />
 
       <h3 className="h3">✅ Foods to Eat More Often</h3>
+      {!fr.eatMore.length && <p className="muted">No foods in the library match all of the selected preferences. Try removing an item under Avoid.</p>}
       <div className="grid-cards">
-        {sections.map((s) => (
+        {fr.eatMore.map((s) => (
           <Card key={s.name}>
             <h4><span aria-hidden="true">{s.icon}</span> {s.name}</h4>
             <ul className="plain">
               {s.items.map((f) => (
-                <li key={f.id}><strong>{f.name}</strong><div className="small">{f.reason}</div>{f.supportsLabs.length > 0 && <div className="muted small">Supports: {f.supportsLabs.join(' · ')}</div>}</li>
+                <li key={f.id}>
+                  <strong><VegMark diet={f.diet} /> {f.name}</strong>
+                  <div className="small">{s.general ? 'A generally healthy choice; not tied to a specific result for this profile.' : f.reason}</div>
+                  <FoodFacts food={f} />
+                  {f.ideasText && <div className="muted small">Ideas: {f.ideasText}</div>}
+                </li>
               ))}
             </ul>
           </Card>
@@ -85,7 +97,7 @@ export default function Nutrition({ model, vegetarian, setVegetarian }) {
           <table className="table">
             <thead><tr><th>Limit</th><th>Why it may be better to limit</th><th>Lab result it affects</th><th>Healthier replacement</th></tr></thead>
             <tbody>{fr.limit.map((l) => (
-              <tr key={l.id}><td data-label="Limit"><strong>{l.food}</strong></td><td data-label="Why">{l.why}</td><td data-label="Affects" className="small">{l.labs.join(' · ')}</td><td data-label="Instead">{l.instead}</td></tr>
+              <tr key={l.id}><td data-label="Limit"><strong>{l.food}</strong>{l.exampleText && <div className="muted small">{l.exampleText}</div>}</td><td data-label="Why">{l.why}</td><td data-label="Affects" className="small">{l.labs.join(' · ')}</td><td data-label="Instead">{l.instead}</td></tr>
             ))}</tbody>
           </table>
         </div>
@@ -103,11 +115,19 @@ export default function Nutrition({ model, vegetarian, setVegetarian }) {
         </>
       )}
 
+      {fr.habits.length > 0 && (
+        <>
+          <h3 className="h3">🚶 Daily Habits</h3>
+          <Card><ul className="plain">{fr.habits.map((h) => <li key={h.text}>{h.text}</li>)}</ul></Card>
+        </>
+      )}
+
       <h3 className="h3">🍽️ Personalized Meal Plate</h3>
       <Card>
         <Plate plate={fr.plate} />
         {fr.plate.notes.length > 0 && <ul className="plate-notes">{fr.plate.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
       </Card>
+      <p className="muted tiny">Nutrient values: USDA National Nutrient Database for Standard Reference, Release 28 (public domain). % DV uses FDA Daily Values for adults.</p>
     </div>
   );
 }

@@ -180,13 +180,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- Nutrition ---------- */
 .needs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.toggle { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; font-size: 14px; cursor: pointer; user-select: none; }
-.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.toggle .track { width: 38px; height: 22px; border-radius: 999px; background: #c9d5db; position: relative; transition: background .15s; }
-.toggle .thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
-.toggle input:checked + .track { background: var(--accent); }
-.toggle input:checked + .track .thumb { left: 19px; }
-.toggle input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
 ul.plain { list-style: none; padding: 0; display: grid; gap: 10px; }
 ul.plain li { margin: 0; }
 .swap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
@@ -260,7 +253,7 @@ ul.plain li { margin: 0; }
 .draft-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
 .draft-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 16px; }
 .draft-meta .label, .label { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
-.draft select, .draft input[type=date], .draft input[type=text], .draft input[type=number], .assign select { font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: #fff; color: var(--ink); max-width: 100%; }
+.draft select, .draft input[type=date], .draft input[type=text], .draft input[type=number], .draft-meta input:not([type]), .assign select, .profile-settings input { font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; background: #fff; color: var(--ink); max-width: 100%; }
 .review input.cell { font: inherit; width: 100%; min-width: 60px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; }
 
 .review tr.excluded td { opacity: .45; }
@@ -311,3 +304,66 @@ ul.plain li { margin: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 @media print { .topbar, .footer .btn { position: static; } .tabs { display: none; } }
+.switcher .tag { margin-left: 6px; }
+.welcome h2 { margin: 0 0 8px; }
+.welcome p { max-width: 720px; }
+.profile-settings input { width: 100%; max-width: 320px; }
+.profile-settings .btn-ghost { margin-top: 4px; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Food preferences */
+.prefs { display: grid; gap: 10px; border-width: 2px; }
+.prefs.is-veg { border-color: var(--ok); }
+.prefs-head { display: flex; gap: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.veg-switch { display: inline-flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--ok); background: #fff; text-align: left; min-height: 56px; }
+.veg-switch:hover { background: var(--ok-bg); }
+.veg-switch.on { background: var(--ok); color: #fff; }
+.veg-switch-text { display: grid; line-height: 1.3; }
+.veg-switch-text strong { font-size: 16px; }
+.veg-switch .track { width: 44px; height: 26px; border-radius: 999px; background: #9fb0b9; position: relative; flex: none; transition: background .15s; }
+.veg-switch .thumb { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; }
+.veg-switch.on .track { background: rgba(255, 255, 255, 0.45); }
+.veg-switch.on .thumb { left: 21px; }
+.veg-switch.on .vegmark { background: #fff; }
+.veg-banner { display: flex; gap: 8px; align-items: center; background: var(--ok-bg); color: #145c37; font-weight: 600; padding: 8px 12px; border-radius: 10px; }
+.pref-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pref-label { font-weight: 600; font-size: 13px; color: var(--muted); min-width: 64px; }
+.segmented { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface-2); }
+.segmented button { border: 0; background: none; padding: 6px 12px; font-size: 13.5px; }
+.segmented button + button { border-left: 1px solid var(--line); }
+.segmented button.on { background: var(--accent); color: #fff; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.toggle-chip.on { background: var(--priority-bg); border-color: var(--priority); color: var(--priority); font-weight: 600; text-decoration: line-through; }
+.vegmark { display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1.5px solid; border-radius: 2px; vertical-align: -2px; flex: none; background: #fff; }
+.vegmark span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.vegmark.veg { color: #1e8a52; }
+.vegmark.nonveg { color: #8b3a1a; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 4px; }
+.fact { font-size: 12px; padding: 1px 7px; border-radius: 6px; }
+.fact.good { background: var(--ok-bg); color: #145c37; }
+.fact.watch { background: var(--watch-bg); color: var(--watch); }
+.trend-note { font-weight: 600; }
+.day-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.day-tabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; white-space: nowrap; font-size: 14px; }
+.day-tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.meal-option + .meal-option { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.meal-option.alt { color: var(--muted); }
+
+/* Progress since the last report */
+.progress-list { display: grid; gap: 8px; }
+.progress-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.progress-item .icon { font-weight: 700; width: 22px; text-align: center; flex: none; }
+.progress-item.improving, .progress-item.back_in_range { background: var(--ok-bg); }
+.progress-item.worsening, .progress-item.new_out { background: var(--attention-bg); }
+
+/* On-device AI */
+.local-ai { display: grid; gap: 8px; }
+.local-ai .bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.local-ai .bar span { display: block; height: 100%; background: var(--accent); transition: width .2s; }
+.bubble.ai { border-left: 3px solid var(--accent-2); }
+@media (max-width: 760px) {
+  .veg-switch { width: 100%; }
+  .pref-label { min-width: 100%; }
+}
+.error-text { color: var(--priority); }

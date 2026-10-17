@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, SevPill, SectionTitle, Modal, fmtDate, StatusPill } from './ui.jsx';
+import Progress from './Progress.jsx';
 import { PENALTY } from '../lib/insights.js';
 
 function ScoreRing({ value }) {
@@ -69,6 +70,8 @@ export default function Overview({ model, go, open }) {
         <Card className="stat sev-border-priority clickable" onClick={() => go('attention')} role="button" tabIndex={0}><div className="stat-num priority">{hi.counts.priority}</div><div className="stat-label">High-priority results</div><div className="muted small">{hi.counts.priority ? 'Discuss with a clinician soon' : 'None found'}</div></Card>
         <Card className="stat sev-border-na"><div className="stat-num date">{fmtDate(model.latestDate)}</div><div className="stat-label">Latest lab date</div><div className="muted small">{model.dates.length} collection date{model.dates.length === 1 ? '' : 's'} on file</div></Card>
       </div>
+
+      <Progress model={model} open={open} limit={4} />
 
       <div className="two-col">
         <Card className="score-card clickable" onClick={() => setShowScore(true)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setShowScore(true)}>

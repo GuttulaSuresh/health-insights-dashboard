@@ -16,7 +16,7 @@ Node.js 20.19+ or 22.13+ is required. The same commands work in PowerShell, Comm
 ## Health data
 
 Never commit, attach or paste real lab results, reports or screenshots that show them, in code, tests, issues or
-pull requests. Use the synthetic profiles in `public/data/` or invent new values. `.gitignore` excludes
+pull requests. Use the synthetic profiles in `public/sample-data/` or invent new values. `.gitignore` excludes
 `public/local-data/` and PDF files for this reason.
 
 ## Branches
@@ -31,7 +31,9 @@ Create a branch from `main` named after the change:
 
 - Match the surrounding style: ES modules, two-space indentation, single quotes, functional React components.
 - Keep `src/lib/` free of browser APIs where possible so the logic stays testable in Node.
-  Browser-only code lives in `loadData.js`, `storage.js`, `pdfText.js` and the components.
+  Browser-only code lives in `loadData.js`, `storage.js`, `pdfText.js`, `localAi.js` and the components.
+- Never type nutrient values by hand. Point a food at its USDA entry and run `npm run foods` (see
+  [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md#adding-a-food)).
 - Status must always come from the lab's reference range. Clinical context belongs in severity rules.
 - Medical wording stays educational: "can be associated with", "may suggest", never a diagnosis.
 - Comment business rules and non-obvious behavior, not what the code already says.
@@ -39,7 +41,8 @@ Create a branch from `main` named after the change:
 
 ## Tests
 
-- Add or update tests in `tests/` for any change to parsing, status, severity, trends, findings or storage.
+- Add or update tests in `tests/` for any change to parsing, status, severity, trends, findings, food scoring,
+  preferences or storage.
 - Use synthetic fixtures only.
 - Run everything CI runs before opening a pull request:
 

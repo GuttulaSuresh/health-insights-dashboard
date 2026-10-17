@@ -3,6 +3,7 @@
 A browser-based dashboard that turns blood test results into plain-language explanations, trends, food
 suggestions and questions for your next appointment. It supports any number of people, keeps each profile's
 data strictly separate, and runs entirely on your device: there is no backend, no account and no API key.
+Food suggestions are computed offline from bundled USDA nutrient data and each person's food preferences.
 
 ![Overview tab with synthetic sample data](docs/images/overview.png)
 
@@ -20,33 +21,58 @@ starting point for a privacy-first health data viewer.
 
 ## Features
 
-- **Profiles from configuration**: any number of people, defined in one `profiles.json`. Records whose
-  `profile_id` does not match are quarantined, never analyzed.
+- **Profiles created from your reports**: the app starts empty. Add a report and it reads the name printed
+  on it, creates a profile for that person, and files later reports with the same name under that profile.
+  Profiles can be renamed or deleted, and records for one person are never mixed with another's.
 - **Deterministic status**: High / Low / In range comes only from the lab's reference range, including
   one-sided limits such as `< 200` or `≥ 40`. Severity colors add context but never override the lab.
 - **Findings** that read related tests together, with confidence levels and follow-up questions.
 - **Trends and charts** built from real history only. A single measurement is labeled as a baseline.
-- **Food suggestions, swaps and a daily meal plan** ranked by the profile's own results, with Indian and Western meal options and a vegetarian filter.
-- **Offline Q&A** ("Why is my vitamin D low?") answered from the selected profile's data by a rule-based engine.
-- **Add Report**: read a text-based PDF, CSV or JSON in the browser, review every parsed value, choose the
-  profile (or leave it unassigned) and save. Nothing is uploaded.
+- **Food suggestions from real nutrient data**: a library of 125 foods and 80 meals, each scored per serving from
+  the USDA National Nutrient Database (SR28, public domain), for example fiber and saturated fat for LDL, or iron
+  and vitamin C for low iron. Every suggestion shows the numbers behind it ("9.6 g fiber (34% DV)").
+- **Food preferences per profile**: a prominent **Vegetarian options only** switch, plus diet (everything,
+  pescatarian, eggetarian, vegetarian, vegan), cuisine (Indian, Western or both), allergies to avoid, and a Hide
+  button on any food. Foods, meals and the plate update immediately, and choices are saved per profile.
+- **7-day meal plan** that rotates: a different breakfast, lunch, snack and dinner each day with an alternative,
+  chosen from the best-scoring meals that fit the preferences. The rotation changes every week.
+- **Since the last report**: each result is compared with the previous one ("LDL fell from 148 to 131 mg/dL since
+  18 Sep 2025"). Results that are getting worse get more weight in the food suggestions.
+- **Offline Q&A** ("Why is my vitamin D low?", "What changed since my last report?") answered from the selected
+  profile's data by a rule-based engine.
+- **Optional on-device AI**: turn it on in the Ask tab to add a free-form answer from a small language model
+  that runs in the browser (WebGPU). The model is downloaded once and then works offline; results never leave
+  the device. Off by default.
+- **Add Report**: read a text-based PDF, CSV or JSON in the browser, review every parsed value, confirm the
+  person (new or existing) and save. Every tab updates immediately. Nothing is uploaded.
+- **Sample data on request**: two synthetic profiles can be shown from the welcome screen or the footer.
 - **Data quality checks**: missing units or dates, unit mismatches, duplicates and status disagreements.
 
-| Trends | What needs attention | Add a report |
+| First start | New person from a report | Trends |
 |---|---|---|
-| ![Trends](docs/images/trends.png) | ![Findings](docs/images/attention.png) | ![Add report](docs/images/add-report.png) |
+| ![Welcome screen](docs/images/welcome.png) | ![Add report creating a profile](docs/images/add-report.png) | ![Trends](docs/images/trends.png) |
+
+| Top foods with the vegetarian filter on | 7-day meal plan |
+|---|---|
+| ![Top 10 foods, vegetarian](docs/images/top-foods.png) | ![7-day meal plan](docs/images/meal-plan.png) |
+
+![What needs attention](docs/images/attention.png)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Files["profiles.json + lab files<br/>(public/&lt;data dir&gt;/)"] --> Loader[loadData.js]
     Upload["PDF / CSV / JSON upload"] --> Parser["reportParser.js<br/>pdfText.js (pdf.js)"]
-    Parser --> Storage["storage.js<br/>(localStorage)"]
+    Parser --> Profiles["profiles.js<br/>new or matching profile"]
+    Profiles --> Storage["storage.js<br/>profiles + reports (localStorage)"]
+    Files["Optional bundled files<br/>(sample data or VITE_DATA_DIR)"] --> Loader[loadData.js]
     Loader --> Normalize[normalize.js]
     Storage --> Normalize
-    Normalize --> Engines["insights.js · nutrition.js · qa.js"]
+    Normalize --> Engines["insights.js · progress.js · nutrition.js · qa.js"]
+    USDA["usda-nutrients.json<br/>foodCatalog.js · meals.js"] --> Engines
+    Prefs["preferences.js<br/>diet, cuisine, allergies"] --> Engines
     Engines --> UI["React components"]
+    UI -. optional .-> AI["localAi.js<br/>WebLLM in a web worker"]
 ```
 
 Each profile's model is built from that profile's files and uploads only. See
@@ -63,19 +89,21 @@ Each profile's model is built from that profile's files and uploads only. See
 | Tests | Node.js built-in test runner (`node:test`) |
 | Linting | ESLint 10 with `eslint-plugin-react-hooks` |
 | CI | GitHub Actions on Ubuntu, Windows and macOS |
-| Persistence | Browser localStorage (uploaded reports only) |
+| Persistence | Browser localStorage (profiles, reports and food preferences added in the app) |
+| Nutrient data | USDA National Nutrient Database for Standard Reference, Release 28 (bundled JSON) |
+| Optional on-device AI | WebLLM (`@mlc-ai/web-llm`), loaded only when turned on |
 
 More detail in [docs/TECH_STACK.md](docs/TECH_STACK.md).
 
 ## Project structure
 
 ```text
-public/data/          Synthetic sample profiles and lab files (the default data folder)
+public/sample-data/   Synthetic sample profiles, shown only when the viewer turns them on
 src/
   components/         React UI, one file per tab plus shared ui.jsx
-  content/            Marker catalog (markers.js) and food library (foods.js)
+  content/            Marker catalog, food library (foodCatalog.js + usda-nutrients.json), meals, limits
   lib/                Parsing, normalization, rule engines, storage and configuration
-scripts/              verify-data.mjs: end-to-end checks on a data folder
+scripts/              verify-data.mjs (data checks), build-foods.mjs (regenerates the nutrient JSON)
 tests/                Unit tests (synthetic fixtures only)
 examples/             Synthetic PDF report for trying the upload flow
 docs/                 Architecture, tech stack and data format documentation
@@ -131,7 +159,7 @@ All settings are optional. Copy `.env.example` to `.env` to change them. The app
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_DATA_DIR` | `data` | Folder under `public/` containing `profiles.json` and the lab files it lists |
+| `VITE_DATA_DIR` | (unset) | Optional folder under `public/` with a `profiles.json` and lab files to preload as profiles |
 | `VITE_BASE_PATH` | `./` | Base path of the production build, e.g. `/health-insights-dashboard/` for GitHub Pages |
 | `PORT` | `5173` | Port for `npm run dev` |
 | `PREVIEW_PORT` | `4173` | Port for `npm run preview` |
@@ -140,11 +168,14 @@ Variables prefixed with `VITE_` are embedded in the built JavaScript, so never p
 
 ### Using your own data
 
-1. Copy `public/data/` to `public/local-data/`. That folder is listed in `.gitignore`.
+The normal way is to open the app and add reports in the browser: each person's profile is created from their
+first report. Profiles and reports are kept in that browser's localStorage.
+
+To preload files instead (for example on a shared machine you control):
+
+1. Copy `public/sample-data/` to `public/local-data/`. That folder is listed in `.gitignore`.
 2. Replace the sample files with your own and edit `profiles.json` (format in [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md)).
 3. Set `VITE_DATA_DIR=local-data` in `.env` and restart `npm run dev`.
-
-You can also start with an empty profile (`"files": []`) and add reports through the Add Report tab.
 
 ## Running the application
 
@@ -160,7 +191,7 @@ The build output is static and can be served by any web server or static host.
 
 ```bash
 npm test          # unit tests
-npm run verify    # data checks on public/data (or: npm run verify -- local-data)
+npm run verify    # data checks on public/sample-data (or: npm run verify -- local-data)
 npm run lint      # ESLint
 npm run check     # lint, tests, data checks and build, as CI runs them
 ```
@@ -168,18 +199,25 @@ npm run check     # lint, tests, data checks and build, as CI runs them
 ## Example usage
 
 1. Run `npm run dev` and open http://localhost:5173.
-2. Switch between the **Jane Doe** and **John Doe** sample profiles in the top right.
-3. Open **Trends** on Jane Doe to see LDL improving across three collection dates.
-4. Open **Add Report** on John Doe and drop in `examples/sample-lab-report.pdf`. Review the parsed values, keep
-   the suggested profile and save. Every tab updates, and Jane Doe's dashboard is unchanged.
-5. Ask "Which results should I worry about?" in **Ask About My Results**.
+2. The app opens on an empty welcome screen. Drop `examples/sample-lab-report.pdf` into it.
+3. The report is printed for "DOE, JOHN", so the app proposes a new profile named **John Doe**. Review the
+   values and save. You land on John Doe's dashboard, and every tab includes the new results.
+4. Add another report with the same name and it goes to John Doe automatically; a different name creates
+   another profile.
+5. Choose **Show sample data** in the footer to add two synthetic profiles with several collection dates, then
+   open **Trends** on the sample Jane Doe to see LDL improving over time.
+6. Open **Top 10 Foods** and turn on **Vegetarian options only**, or pick a cuisine or an allergy to avoid. The
+   list, the Nutrition tab and the 7-day **Meal Plan** all change, and the choice is remembered for that profile.
+7. Rename or delete a profile under **Sources**.
 
-All bundled profiles and values are synthetic sample data for demonstration only.
+The example PDF and sample profiles are synthetic data for demonstration only.
 
 ## Security and privacy
 
-- Lab data is processed in the browser. The app makes no network requests other than loading its own files.
-- Reports added through the app are stored unencrypted in the browser's localStorage on that device. Anyone with
+- Lab data is processed in the browser. The app makes no network requests other than loading its own files,
+  with one exception you choose: turning on the on-device AI downloads the model once from Hugging Face. Lab
+  results are given to the model inside the browser only and are never sent anywhere.
+- Profiles (including the names read from reports) and reports added through the app are stored unencrypted in the browser's localStorage on that device. Anyone with
   access to that browser profile can read them; clear site data to remove them.
 - Keep personal lab files in `public/local-data/` (git-ignored) or another ignored folder. Never commit them.
   `.gitignore` also excludes `.env` files, keys, credential files and PDFs.
@@ -192,18 +230,31 @@ All bundled profiles and values are synthetic sample data for demonstration only
 
 | Problem | Fix |
 |---|---|
-| "Could not load data/profiles.json" | Check that `public/<VITE_DATA_DIR>/profiles.json` exists and restart the dev server after editing `.env`. |
+| "Could not load …/profiles.json" | Only happens when `VITE_DATA_DIR` is set. Check that `public/<VITE_DATA_DIR>/profiles.json` exists, or remove the setting, and restart the dev server. |
 | "profiles.json …" validation error | Profile ids must be lowercase letters, digits, `-` or `_`, unique, and file paths must be relative. |
 | A PDF shows "no readable text" | The PDF is a scanned image. Download the text-based PDF from the lab portal or use CSV/JSON. |
 | A test is shown under "Other Tests" | It is not in the marker catalog yet. Add an entry with aliases to `src/content/markers.js`. |
 | Port already in use | Set `PORT` (or `PREVIEW_PORT`) in `.env`, or stop the other process. |
 | `npm ci` fails | Make sure `node --version` is 20.19+ or 22.13+, then delete `node_modules` and retry. |
-| Added reports disappeared | They live in that browser's localStorage, so a different browser, private window or cleared site data will not have them. |
+| On-device AI says WebGPU is not supported | Use a recent Chrome or Edge on a computer with a modern graphics chip. The rest of the app works without it. |
+| On-device AI download is slow or fails | The first start downloads 0.9–2.3 GB. Pick the smallest model, check the connection, and try again; later starts load from the browser cache. |
+| Added reports or profiles disappeared | They live in that browser's localStorage, so a different browser, device, private window or cleared site data will not have them. |
 
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, coding standards and the pull
 request checklist. Never include real health data in issues, pull requests or test fixtures.
+
+## Data sources
+
+- Nutrient values: U.S. Department of Agriculture, Agricultural Research Service. USDA National Nutrient Database
+  for Standard Reference, Release 28 (2015, slightly revised 2016). Public domain. Only the 132 USDA entries the app uses
+  are bundled, in `src/content/usda-nutrients.json`; `npm run foods -- <path to ABBREV.txt>` regenerates it.
+- Daily Values: U.S. FDA Daily Values for adults (2016 labeling rule).
+- The food library's tags (diet, cuisine, allergens), meal ideas and all explanatory wording were written with AI
+  assistance and have not been reviewed by a clinician or dietitian.
+- On-device AI models are downloaded by the viewer from Hugging Face under their own licenses (Qwen 2.5:
+  Apache 2.0; Llama 3.2: Llama 3.2 Community License). They are not part of this repository.
 
 ## License
 

@@ -1,6 +1,6 @@
-import { DATA_DIR } from '../lib/config.js';
 import { Card, SectionTitle, StatusPill, TrendText, fmtDate } from './ui.jsx';
 import TrendChart from './TrendChart.jsx';
+import Progress from './Progress.jsx';
 
 const KEY = ['hba1c', 'fasting_glucose', 'ldl', 'hdl', 'triglycerides', 'non_hdl', 'total_cholesterol', 'vitamin_d', 'vitamin_b12', 'hemoglobin', 'mcv', 'mch', 'iron', 'ferritin', 'iron_saturation'];
 
@@ -18,9 +18,10 @@ export default function Trends({ model, open }) {
       {!multi && (
         <Card className="note-card">
           <strong>Baseline measurement — additional results are needed to establish a trend.</strong>
-          <p className="small">These are {model.profile.name}'s first results on file. Add earlier or later reports in the Add Report tab, or add files under <code>public/{DATA_DIR}/</code> and list them in <code>profiles.json</code>; charts appear here automatically. No historical values are invented.</p>
+          <p className="small">These are {model.profile.name}'s first results on file. Add earlier or later reports in the Add Report tab and charts appear here automatically. No historical values are invented.</p>
         </Card>
       )}
+      <Progress model={model} open={open} />
       <div className="trend-grid">
         {keyIds.map((id) => {
           const r = byId[id];

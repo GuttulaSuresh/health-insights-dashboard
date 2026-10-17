@@ -1,19 +1,18 @@
 // End-to-end checks on a data folder: every record is accounted for, lab ranges are preserved,
 // status matches the lab flags, and profiles never mix.
 //
-// Usage: npm run verify [-- <folder under public/>]   (defaults to VITE_DATA_DIR, then "data")
+// Usage: npm run verify [-- <folder under public/>]   (defaults to VITE_DATA_DIR, then "sample-data")
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildProfileModel } from '../src/lib/model.js';
 import { answer } from '../src/lib/qa.js';
-import * as foods from '../src/content/foods.js';
 import { extractRawRecords } from '../src/lib/normalize.js';
 import { resolveDataDir } from '../src/lib/config.js';
 import { validateManifest } from '../src/lib/manifest.js';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dataDir = resolveDataDir(process.argv[2] || process.env.VITE_DATA_DIR);
+const dataDir = resolveDataDir(process.argv[2] || process.env.VITE_DATA_DIR) || 'sample-data';
 const root = path.join(projectRoot, 'public', ...dataDir.split('/'));
 
 let failures = 0;
@@ -63,6 +62,11 @@ for (const p of manifest.profiles) {
   check(m.labRecords.filter((r) => r.history.length < 2).every((r) => r.trend === 'New'), 'no trend invented for single measurements');
   const top = m.foodRecommendations.top10;
   check(top.length <= 10 && top.every((f) => f.supportsLabs.length > 0), `${top.length} top foods, each linked to one of this profile's results`);
+  const veg = buildProfileModel({ id: p.id, name: p.name }, files, { diet: 'vegetarian', cuisine: 'indian' });
+  const animal = new Set(['egg', 'fish', 'meat']);
+  const vegMeals = veg.mealPlans.flatMap((d) => d.meals.flatMap((s) => [s.main, s.alt])).filter(Boolean);
+  check(veg.foodRecommendations.top10.every((f) => !animal.has(f.diet)) && vegMeals.every((x) => !animal.has(x.diet)), 'vegetarian preference removes meat, fish and eggs from foods and the 7-day plan');
+  check(veg.mealPlans.length === 7 && veg.mealPlans.every((d) => d.meals.every((s) => s.main)), 'the 7-day plan has a meal for every slot');
 }
 
 if (models.length > 1) {
@@ -72,7 +76,7 @@ if (models.length > 1) {
       if (a === b) continue;
       const uids = new Set(a.labRecords.map((r) => r.uid));
       check(b.labRecords.every((r) => !uids.has(r.uid)), `${b.profile.name} shares no records with ${a.profile.name}`);
-      const text = JSON.stringify(answer('Which results should I worry about?', a, foods)) + JSON.stringify(answer('What foods should I eat?', a, foods));
+      const text = JSON.stringify(answer('Which results should I worry about?', a)) + JSON.stringify(answer('What foods should I eat?', a));
       check(!text.includes(b.profile.name), `${a.profile.name}'s answers never mention ${b.profile.name}`);
     }
   }

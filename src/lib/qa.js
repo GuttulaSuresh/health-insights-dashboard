@@ -3,6 +3,8 @@
 import { MARKERS } from '../content/markers.js';
 import { normName, MARKER_BY_ID } from './normalize.js';
 import { fmt } from './insights.js';
+import { foodsForNeed } from './nutrition.js';
+import { NEED_OF_MARKER } from './progress.js';
 
 const SKIP_ALIASES = new Set(['k', 'na', 'ca', 'mg', 'cl', 'hb', 'iron total']);
 const TOPIC_WORDS = [
@@ -37,21 +39,9 @@ export function detectMarkers(q) {
   return ids;
 }
 
-const NEED_OF_MARKER = {
-  hba1c: 'glycemic', fasting_glucose: 'glycemic', triglycerides: 'triglycerides', ldl: 'ldl', non_hdl: 'ldl', total_cholesterol: 'ldl', chol_hdl_ratio: 'ldl',
-  hdl: 'hdl', mcv: 'iron', mch: 'iron', hemoglobin: 'iron', ferritin: 'iron', iron: 'iron', iron_saturation: 'iron', tibc: 'iron',
-  vitamin_d: 'vitd', vitamin_b12: 'b12', folate: 'folate',
-};
-
 const statusWord = (r) => ({ HIGH: 'above the lab range', LOW: 'below the lab range', 'IN RANGE': 'within the lab range', 'NOT REPORTED': 'not reported by the lab', 'NOT AVAILABLE': 'not available' }[r.status] || r.status.toLowerCase());
 
-function foodsFor(model, need) {
-  const { FOODS } = model.__foods;
-  return FOODS.filter((f) => (f.supports[need] || 0) >= 2).sort((a, b) => b.supports[need] - a.supports[need]).slice(0, 6);
-}
-
-export function answer(question, model, foodsLib) {
-  model = { ...model, __foods: foodsLib };
+export function answer(question, model) {
   const name = model.profile.name;
   const q = question.toLowerCase();
   const recs = Object.fromEntries(model.labRecords.map((r) => [r.marker_id, r]));
@@ -69,6 +59,7 @@ export function answer(question, model, foodsLib) {
     : /\b(this week|meal plan|what should i eat|eat today|diet plan|what to eat|what can i eat)\b/.test(q) && !present.length ? 'week'
     : /\b(worry|worried|concern|serious|urgent|attention|priority|abnormal|bad|wrong|flagged|out of range)\b/.test(q) && !present.length ? 'worry'
     : /\b(score|wellness)\b/.test(q) ? 'score'
+    : /\b(since (my |the )?(last|previous) (report|test|result)s?|what changed|progress)\b/.test(q) && !present.length ? 'progress'
     : /\b(trend|chang\w*|getting (better|worse)|improv(ed|ing)|over time|history)\b/.test(q) && !/\bhow (can|do|to)\b/.test(q) ? 'trend'
     : /\b(food|foods|eat|diet|nutrition|meal)\b/.test(q) ? 'foods'
     : /\b(improve|raise|increase|lower|reduce|boost|fix|bring (it )?(up|down)|get .* (up|down))\b/.test(q) ? 'improve'
@@ -105,18 +96,32 @@ export function answer(question, model, foodsLib) {
     }
     case 'week': {
       const top = model.foodRecommendations.top10.slice(0, 5);
-      say(`For ${name}, these five foods give the most support for the current results:`);
-      bullets(top.map((f) => `**${f.name}** (${f.serving}, ${f.frequency.toLowerCase()}): ${f.reason}`));
-      const plan = model.mealPlans;
-      say('A simple day could look like:');
-      bullets(plan.filter((p) => !p.optional).map((p) => `**${p.slot}:** ${p.options[0].text}`));
-      say('See the Meal Plan tab for more options.');
+      if (top.length) {
+        say(`For ${name}, these five foods give the most support for the current results and food preferences:`);
+        bullets(top.map((f) => `**${f.name}** (${f.serving}, ${f.frequency.toLowerCase()}): ${f.reason}`));
+      }
+      const today = model.mealPlans[0];
+      if (today) {
+        say('Today could look like:');
+        bullets(today.meals.filter((x) => x.main).map((x) => `**${x.slot}:** ${x.main.text}`));
+      }
+      say('The Meal Plan tab has the full week, with a different option each day.');
       break;
     }
     case 'score': {
       const s = model.healthInsights.score;
       say(`${name}'s Wellness Snapshot Score is ${s.total ?? 'not available'} (${s.band}), based on ${s.coverage} of ${s.of} areas with data. It is a simple summary, not a medical assessment.`);
       bullets(s.areas.map((a) => `${a.name}: ${a.score ?? 'no data'}`));
+      break;
+    }
+    case 'progress': {
+      if (!model.progress.length) {
+        say(`There is nothing to compare yet for ${name}: either there is only one report, or every result is in range on both reports.`);
+        break;
+      }
+      say(`What changed for ${name} since the previous report:`);
+      bullets(model.progress.map((p) => p.text));
+      refs.push(...model.progress.map((p) => p.rec));
       break;
     }
     case 'trend': {
@@ -138,8 +143,10 @@ export function answer(question, model, foodsLib) {
         const need = NEED_OF_MARKER[r.marker_id];
         say(`**${r.test_name}** is ${r.value} ${r.unit}, ${statusWord(r)} (${r.range_text}).${r.status === 'IN RANGE' && r.severity === 'ok' ? ' It is already in range; these habits help keep it there.' : r.severity_note && r.status === 'IN RANGE' ? ' ' + r.severity_note : ''}`);
         if (need) {
-          const foods = foodsFor(model, need);
-          if (foods.length) bullets(foods.map((f) => `**${f.name}** (${f.serving}, ${f.frequency.toLowerCase()}): ${f.why[need]}`));
+          const foods = foodsForNeed(need, model.preferences);
+          if (foods.length) bullets(foods.map((f) => `**${f.name}** (${f.serving}): ${f.facts.join(', ') || f.reason}`));
+          else if (m?.nutrition && m.nutrition !== '—') say(`Nutrition: ${m.nutrition}`);
+          else say('None of the foods in the library match both this result and the selected food preferences.');
         } else if (m?.nutrition && m.nutrition !== '—') say(`Nutrition: ${m.nutrition}`);
         if (intent === 'improve' && m?.lifestyle && m.lifestyle !== '—') say(`Lifestyle: ${m.lifestyle}`);
         refs.push(r);
@@ -190,4 +197,5 @@ export const SAMPLE_QUESTIONS = [
   'Why is MCV low?',
   'What should I eat this week?',
   'Which labs should I repeat?',
+  'What changed since my last report?',
 ];

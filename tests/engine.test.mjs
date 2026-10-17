@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { resolveMarker, computeStatus, normalizeProfileData, parseCSV } from '../src/lib/normalize.js';
 import { buildProfileModel } from '../src/lib/model.js';
 import { answer } from '../src/lib/qa.js';
-import * as foods from '../src/content/foods.js';
 
 // Synthetic test fixtures only (not real data).
 const rec = (o) => ({ profile_id: 'p1', profile_name: 'Test', unit: 'mg/dL', source: 'Test fixture', collection_date: '2026-01-01', ...o });
@@ -64,6 +63,6 @@ test('mild single abnormality is not exaggerated; HbA1c >= 6.5 is high priority'
 
 test('Q&A says "not available" for tests the profile does not have', () => {
   const m = buildProfileModel({ id: 'p1', name: 'Test' }, [{ file: 'x.json', content: [rec({ test_name: 'HDL', value: 50, reference_low: 40 })] }]);
-  const a = answer('Why is my B12 low?', m, foods);
+  const a = answer('Why is my B12 low?', m);
   assert.match(a.blocks[0].text, /not in Test's uploaded results/);
 });

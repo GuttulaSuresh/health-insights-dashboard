@@ -10,5 +10,8 @@ export default defineConfig(({ mode }) => {
     base: env.VITE_BASE_PATH || './',
     server: { port },
     preview: { port: Number(env.PREVIEW_PORT) || 4173 },
+    // The optional on-device AI library (about 6 MB) is split into its own chunk and only downloaded when
+    // someone turns that feature on, so its size does not affect normal page loads.
+    build: { chunkSizeWarningLimit: 6500 },
   };
 });

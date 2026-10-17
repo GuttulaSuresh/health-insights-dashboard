@@ -1,15 +1,20 @@
-// Builds the complete dashboard model for one profile from that profile's files.
+// Builds the complete dashboard model for one profile from that profile's files and food preferences.
 import { normalizeProfileData } from './normalize.js';
 import {
   buildFindings, buildNeeds, buildScore, categoryStatus, buildGoals, buildFollowUpTests, buildQuestions, overviewSummary,
 } from './insights.js';
-import { topFoods, eatMore, foodsToLimit, foodSwaps, dailyPlan, mealPlate } from './nutrition.js';
+import { topFoods, eatMore, foodsToLimit, foodSwaps, habitsFor, weekPlan, mealPlate } from './nutrition.js';
+import { buildProgress, applyProgress } from './progress.js';
+import { DEFAULT_PREFERENCES, normalizePreferences } from './preferences.js';
 
-export function buildProfileModel(profile, files) {
+export function buildProfileModel(profile, files, preferences = DEFAULT_PREFERENCES, { today = new Date() } = {}) {
+  const prefs = normalizePreferences(preferences);
   const data = normalizeProfileData(profile, files);
   const { records } = data;
   const findings = buildFindings(records);
-  const needs = buildNeeds(findings);
+  const baseNeeds = buildNeeds(findings);
+  const progress = buildProgress(records, baseNeeds.weights);
+  const needs = applyProgress(baseNeeds, progress);
   const healthInsights = {
     findings,
     summary: overviewSummary(profile, records, findings),
@@ -29,19 +34,22 @@ export function buildProfileModel(profile, files) {
   };
   const foodRecommendations = {
     needs,
-    top10: topFoods(needs),
-    eatMore: eatMore(needs),
+    top10: topFoods(needs, 10, prefs),
+    eatMore: eatMore(needs, prefs),
     limit: foodsToLimit(needs),
     swaps: foodSwaps(needs),
-    plate: mealPlate(needs),
+    habits: habitsFor(needs),
+    plate: mealPlate(needs, prefs),
   };
   return {
     profile,
+    preferences: prefs,
+    progress,
     ...data,
     labRecords: records,
     healthInsights,
     foodRecommendations,
-    mealPlans: dailyPlan(needs),
+    mealPlans: weekPlan(needs, prefs, { start: today, seed: profile.id }),
     healthGoals: buildGoals(findings),
   };
 }
