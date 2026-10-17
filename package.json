@@ -1,0 +1,33 @@
+{
+  "name": "health-insights-dashboard",
+  "version": "1.0.0",
+  "description": "Browser-based dashboard that turns lab results into plain-language insights, trends and food suggestions, with strict per-profile separation.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test",
+    "verify": "node scripts/verify-data.mjs",
+    "lint": "eslint .",
+    "check": "npm run lint && npm test && npm run verify && npm run build"
+  },
+  "dependencies": {
+    "pdfjs-dist": "4.10.38",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "16.5.0",
+    "vite": "6.4.4"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "profiles": [
+    {
+      "id": "jane-doe",
+      "name": "Jane Doe",
+      "match": [
+        "DOE, JANE",
+        "Jane Doe"
+      ],
+      "files": [
+        "jane-doe/2025-03-12.csv",
+        "jane-doe/2025-09-18.json",
+        "jane-doe/2026-03-20.json"
+      ]
+    },
+    {
+      "id": "john-doe",
+      "name": "John Doe",
+      "match": [
+        "DOE, JOHN",
+        "John Doe"
+      ],
+      "files": [
+        "john-doe/2025-06-02.json",
+        "john-doe/2026-02-14.json"
+      ]
+    }
+  ]
+}
