@@ -3,10 +3,8 @@
 ## System overview
 
 Health Insights Dashboard is a static single-page application. Vite bundles the React UI and the rule engines into
-plain HTML, CSS and JavaScript. The app starts with no profiles. People add lab reports in the browser; each
-report creates or joins a profile based on the name printed on it, and profiles and reports are kept in
-localStorage. Optional bundled files (sample data, or a folder set with `VITE_DATA_DIR`) are fetched as static
-files. All parsing and analysis happens locally. There is no server component, database,
+plain HTML, CSS and JavaScript. At runtime the browser fetches `profiles.json` and the lab files it lists from the
+configured data folder, then does all parsing and analysis locally. There is no server component, database,
 authentication or third-party API.
 
 ```mermaid
@@ -50,11 +48,10 @@ flowchart TB
 
 | Module | Responsibility |
 |---|---|
-| `lib/config.js` | Reads the optional `VITE_DATA_DIR`, the sample data folder and the build base path; rejects folders outside `public/`. |
-| `lib/profiles.js` | Turns the printed patient name into a profile name and a unique id; creates profile records. |
+| `lib/config.js` | Reads `VITE_DATA_DIR` and the build base path; rejects data folders outside `public/`. |
 | `lib/manifest.js` | Validates `profiles.json`: unique lowercase ids, names, relative file paths. |
 | `lib/loadData.js` | Fetches the manifest and, on demand, one profile's files. Adapts saved uploads to the same shape. |
-| `lib/storage.js` | Saves, lists and deletes profiles and reports added in the app, plus the sample-data preference (localStorage). Async API so the backend can change. |
+| `lib/storage.js` | Saves, lists and deletes reports added in the app (localStorage). Async API so the backend can change. |
 | `lib/pdfText.js` | Extracts printed lines from a text-based PDF with pdf.js. Loaded only when a PDF is chosen. |
 | `lib/reportParser.js` | Turns report lines into draft records: name, value, flag, range, unit, report title, patient name, date. |
 | `lib/normalize.js` | Maps test names to catalog markers, computes status and severity, removes duplicates, builds history and trends, quarantines records for other profiles. |
@@ -68,15 +65,13 @@ flowchart TB
 
 ## Data flow
 
-1. `App` reads saved profiles and reports from storage, and loads the bundled manifests that are enabled (sample data when turned on, `VITE_DATA_DIR` when set). With no profiles it shows a welcome screen with the upload area.
-2. When a profile is selected, `loadProfileFiles` fetches only that profile's bundled files (none for profiles created in the app).
+1. `App` loads and validates the manifest, then reads saved uploads from storage.
+2. When a profile is selected, `loadProfileFiles` fetches only that profile's files.
 3. `buildProfileModel(profile, files)` receives that profile's bundled files plus uploads whose `profile_id`
    matches. `normalizeProfileData` quarantines any record with a different or missing `profile_id`.
 4. The rule engines run on the normalized records and the UI renders the resulting model.
-5. Add Report parses a file into a draft. The owner defaults to the profile whose saved names match the name
-   printed on the report; otherwise a new profile named after the report is proposed. The user reviews the
-   values, confirms the person (new, existing or Unassigned) and saves. A new profile is stored first, then the
-   report, and the app switches to that profile's dashboard. Unassigned reports reach no model.
+5. Add Report parses a file into a draft, the user reviews it and picks a profile (or Unassigned), and the saved
+   report is merged into that profile's model on the next render. Unassigned reports reach no model.
 
 ## Key business rules
 
@@ -96,16 +91,14 @@ also reads `PORT` and `PREVIEW_PORT`. There are no runtime secrets.
 
 ## Persistence
 
-- Bundled data: static files under `public/sample-data/` or `public/<VITE_DATA_DIR>/`, read-only at runtime.
-- Profiles created in the app: localStorage key `health-insights.profiles.v1`.
-- Sample-data preference: localStorage key `health-insights.show-sample.v1`.
+- Bundled data: static files under `public/<data dir>/`, read-only at runtime.
 - Uploaded reports: localStorage key `health-insights.reports.v1`, an array of report objects. Corrupt values are
   ignored, and saving fails with a readable message when storage is unavailable (for example in some private
   browsing modes).
 
 ## Error handling
 
-- A missing or invalid bundled `profiles.json` shows a message naming the file and the setting to check.
+- Missing or invalid `profiles.json` shows a message naming the file and the setting to check.
 - File fetch failures name the file and HTTP status.
 - Unknown test names are shown under their file category with generic wording and listed in the data quality
   check rather than dropped.

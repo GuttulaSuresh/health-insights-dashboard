@@ -20,34 +20,29 @@ starting point for a privacy-first health data viewer.
 
 ## Features
 
-- **Profiles created from your reports**: the app starts empty. Add a report and it reads the name printed
-  on it, creates a profile for that person, and files later reports with the same name under that profile.
-  Profiles can be renamed or deleted, and records for one person are never mixed with another's.
+- **Profiles from configuration**: any number of people, defined in one `profiles.json`. Records whose
+  `profile_id` does not match are quarantined, never analyzed.
 - **Deterministic status**: High / Low / In range comes only from the lab's reference range, including
   one-sided limits such as `< 200` or `≥ 40`. Severity colors add context but never override the lab.
 - **Findings** that read related tests together, with confidence levels and follow-up questions.
 - **Trends and charts** built from real history only. A single measurement is labeled as a baseline.
 - **Food suggestions, swaps and a daily meal plan** ranked by the profile's own results, with Indian and Western meal options and a vegetarian filter.
 - **Offline Q&A** ("Why is my vitamin D low?") answered from the selected profile's data by a rule-based engine.
-- **Add Report**: read a text-based PDF, CSV or JSON in the browser, review every parsed value, confirm the
-  person (new or existing) and save. Every tab updates immediately. Nothing is uploaded.
-- **Sample data on request**: two synthetic profiles can be shown from the welcome screen or the footer.
+- **Add Report**: read a text-based PDF, CSV or JSON in the browser, review every parsed value, choose the
+  profile (or leave it unassigned) and save. Nothing is uploaded.
 - **Data quality checks**: missing units or dates, unit mismatches, duplicates and status disagreements.
 
-| First start | New person from a report | Trends |
+| Trends | What needs attention | Add a report |
 |---|---|---|
-| ![Welcome screen](docs/images/welcome.png) | ![Add report creating a profile](docs/images/add-report.png) | ![Trends](docs/images/trends.png) |
-
-![What needs attention](docs/images/attention.png)
+| ![Trends](docs/images/trends.png) | ![Findings](docs/images/attention.png) | ![Add report](docs/images/add-report.png) |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
+    Files["profiles.json + lab files<br/>(public/&lt;data dir&gt;/)"] --> Loader[loadData.js]
     Upload["PDF / CSV / JSON upload"] --> Parser["reportParser.js<br/>pdfText.js (pdf.js)"]
-    Parser --> Profiles["profiles.js<br/>new or matching profile"]
-    Profiles --> Storage["storage.js<br/>profiles + reports (localStorage)"]
-    Files["Optional bundled files<br/>(sample data or VITE_DATA_DIR)"] --> Loader[loadData.js]
+    Parser --> Storage["storage.js<br/>(localStorage)"]
     Loader --> Normalize[normalize.js]
     Storage --> Normalize
     Normalize --> Engines["insights.js · nutrition.js · qa.js"]
@@ -68,14 +63,14 @@ Each profile's model is built from that profile's files and uploads only. See
 | Tests | Node.js built-in test runner (`node:test`) |
 | Linting | ESLint 10 with `eslint-plugin-react-hooks` |
 | CI | GitHub Actions on Ubuntu, Windows and macOS |
-| Persistence | Browser localStorage (profiles and reports added in the app) |
+| Persistence | Browser localStorage (uploaded reports only) |
 
 More detail in [docs/TECH_STACK.md](docs/TECH_STACK.md).
 
 ## Project structure
 
 ```text
-public/sample-data/   Synthetic sample profiles, shown only when the viewer turns them on
+public/data/          Synthetic sample profiles and lab files (the default data folder)
 src/
   components/         React UI, one file per tab plus shared ui.jsx
   content/            Marker catalog (markers.js) and food library (foods.js)
@@ -136,7 +131,7 @@ All settings are optional. Copy `.env.example` to `.env` to change them. The app
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_DATA_DIR` | (unset) | Optional folder under `public/` with a `profiles.json` and lab files to preload as profiles |
+| `VITE_DATA_DIR` | `data` | Folder under `public/` containing `profiles.json` and the lab files it lists |
 | `VITE_BASE_PATH` | `./` | Base path of the production build, e.g. `/health-insights-dashboard/` for GitHub Pages |
 | `PORT` | `5173` | Port for `npm run dev` |
 | `PREVIEW_PORT` | `4173` | Port for `npm run preview` |
@@ -145,14 +140,11 @@ Variables prefixed with `VITE_` are embedded in the built JavaScript, so never p
 
 ### Using your own data
 
-The normal way is to open the app and add reports in the browser: each person's profile is created from their
-first report. Profiles and reports are kept in that browser's localStorage.
-
-To preload files instead (for example on a shared machine you control):
-
-1. Copy `public/sample-data/` to `public/local-data/`. That folder is listed in `.gitignore`.
+1. Copy `public/data/` to `public/local-data/`. That folder is listed in `.gitignore`.
 2. Replace the sample files with your own and edit `profiles.json` (format in [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md)).
 3. Set `VITE_DATA_DIR=local-data` in `.env` and restart `npm run dev`.
+
+You can also start with an empty profile (`"files": []`) and add reports through the Add Report tab.
 
 ## Running the application
 
@@ -168,7 +160,7 @@ The build output is static and can be served by any web server or static host.
 
 ```bash
 npm test          # unit tests
-npm run verify    # data checks on public/sample-data (or: npm run verify -- local-data)
+npm run verify    # data checks on public/data (or: npm run verify -- local-data)
 npm run lint      # ESLint
 npm run check     # lint, tests, data checks and build, as CI runs them
 ```
@@ -176,21 +168,18 @@ npm run check     # lint, tests, data checks and build, as CI runs them
 ## Example usage
 
 1. Run `npm run dev` and open http://localhost:5173.
-2. The app opens on an empty welcome screen. Drop `examples/sample-lab-report.pdf` into it.
-3. The report is printed for "DOE, JOHN", so the app proposes a new profile named **John Doe**. Review the
-   values and save. You land on John Doe's dashboard, and every tab includes the new results.
-4. Add another report with the same name and it goes to John Doe automatically; a different name creates
-   another profile.
-5. Choose **Show sample data** in the footer to add two synthetic profiles with several collection dates, then
-   open **Trends** on the sample Jane Doe to see LDL improving over time.
-6. Rename or delete a profile under **Sources**.
+2. Switch between the **Jane Doe** and **John Doe** sample profiles in the top right.
+3. Open **Trends** on Jane Doe to see LDL improving across three collection dates.
+4. Open **Add Report** on John Doe and drop in `examples/sample-lab-report.pdf`. Review the parsed values, keep
+   the suggested profile and save. Every tab updates, and Jane Doe's dashboard is unchanged.
+5. Ask "Which results should I worry about?" in **Ask About My Results**.
 
-The example PDF and sample profiles are synthetic data for demonstration only.
+All bundled profiles and values are synthetic sample data for demonstration only.
 
 ## Security and privacy
 
 - Lab data is processed in the browser. The app makes no network requests other than loading its own files.
-- Profiles (including the names read from reports) and reports added through the app are stored unencrypted in the browser's localStorage on that device. Anyone with
+- Reports added through the app are stored unencrypted in the browser's localStorage on that device. Anyone with
   access to that browser profile can read them; clear site data to remove them.
 - Keep personal lab files in `public/local-data/` (git-ignored) or another ignored folder. Never commit them.
   `.gitignore` also excludes `.env` files, keys, credential files and PDFs.
@@ -203,13 +192,13 @@ The example PDF and sample profiles are synthetic data for demonstration only.
 
 | Problem | Fix |
 |---|---|
-| "Could not load …/profiles.json" | Only happens when `VITE_DATA_DIR` is set. Check that `public/<VITE_DATA_DIR>/profiles.json` exists, or remove the setting, and restart the dev server. |
+| "Could not load data/profiles.json" | Check that `public/<VITE_DATA_DIR>/profiles.json` exists and restart the dev server after editing `.env`. |
 | "profiles.json …" validation error | Profile ids must be lowercase letters, digits, `-` or `_`, unique, and file paths must be relative. |
 | A PDF shows "no readable text" | The PDF is a scanned image. Download the text-based PDF from the lab portal or use CSV/JSON. |
 | A test is shown under "Other Tests" | It is not in the marker catalog yet. Add an entry with aliases to `src/content/markers.js`. |
 | Port already in use | Set `PORT` (or `PREVIEW_PORT`) in `.env`, or stop the other process. |
 | `npm ci` fails | Make sure `node --version` is 20.19+ or 22.13+, then delete `node_modules` and retry. |
-| Added reports or profiles disappeared | They live in that browser's localStorage, so a different browser, device, private window or cleared site data will not have them. |
+| Added reports disappeared | They live in that browser's localStorage, so a different browser, private window or cleared site data will not have them. |
 
 ## Contributing
 

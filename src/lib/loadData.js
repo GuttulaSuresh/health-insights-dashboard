@@ -1,40 +1,35 @@
-// Browser loader for bundled profiles: reads <dir>/profiles.json, then each profile's own files on demand.
-import { BASE_URL } from './config.js';
+// Browser loader: reads <data dir>/profiles.json, then each profile's own files on demand.
+import { BASE_URL, DATA_DIR } from './config.js';
 import { validateManifest } from './manifest.js';
 
-const dataUrl = (dir, path) => `${BASE_URL}${dir}/${path}`;
+const dataUrl = (path) => `${BASE_URL}${DATA_DIR}/${path}`;
 
-async function fetchFile(dir, path) {
-  const res = await fetch(dataUrl(dir, path), { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Could not load ${dir}/${path} (HTTP ${res.status}).`);
+async function fetchFile(path) {
+  const res = await fetch(dataUrl(path), { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Could not load ${DATA_DIR}/${path} (HTTP ${res.status}).`);
   return /\.csv$/i.test(path) ? res.text() : res.json();
 }
 
-/**
- * Loads and validates <dir>/profiles.json. Each profile is tagged with where it came from so its files can
- * be fetched later. `source` is 'files' for VITE_DATA_DIR and 'sample' for the demo profiles.
- */
-export async function loadManifest(dir, source) {
+export async function loadManifest() {
   let res;
   try {
-    res = await fetch(dataUrl(dir, 'profiles.json'), { cache: 'no-store' });
+    res = await fetch(dataUrl('profiles.json'), { cache: 'no-store' });
   } catch {
-    throw new Error(`Could not reach ${dir}/profiles.json. Is the server running?`);
+    throw new Error(`Could not reach ${DATA_DIR}/profiles.json. Is the dev server running?`);
   }
-  if (!res.ok) throw new Error(`Could not load ${dir}/profiles.json (HTTP ${res.status}). Check VITE_DATA_DIR in your .env file.`);
+  if (!res.ok) throw new Error(`Could not load ${DATA_DIR}/profiles.json (HTTP ${res.status}). Check VITE_DATA_DIR in your .env file.`);
   let json;
   try {
     json = await res.json();
   } catch {
-    throw new Error(`${dir}/profiles.json is not valid JSON.`);
+    throw new Error(`${DATA_DIR}/profiles.json is not valid JSON.`);
   }
-  return validateManifest(json).profiles.map((p) => ({ ...p, source, dataDir: dir }));
+  return validateManifest(json);
 }
 
-/** Loads one profile's bundled files. Profiles created in the app have none. */
+/** Loads one profile's bundled files. Files of other profiles are never fetched alongside. */
 export async function loadProfileFiles(entry) {
-  if (!entry?.dataDir || !entry.files?.length) return [];
-  return Promise.all(entry.files.map(async (file) => ({ file, content: await fetchFile(entry.dataDir, file) })));
+  return Promise.all(entry.files.map(async (file) => ({ file, content: await fetchFile(file) })));
 }
 
 /** Uploaded reports for exactly this profile, in the same shape as bundled files. */

@@ -8,9 +8,9 @@ import { validateManifest } from '../src/lib/manifest.js';
 
 const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 
-test('data directory is optional and normalized', () => {
-  assert.equal(resolveDataDir(undefined), null);
-  assert.equal(resolveDataDir(''), null);
+test('data directory defaults to "data" and is normalized', () => {
+  assert.equal(resolveDataDir(undefined), 'data');
+  assert.equal(resolveDataDir(''), 'data');
   assert.equal(resolveDataDir('/local-data/'), 'local-data');
   assert.equal(resolveDataDir('nested\\folder'), 'nested/folder');
 });
@@ -32,9 +32,9 @@ test('manifest validation reports the problem clearly', () => {
 });
 
 test('bundled sample manifest is valid and every listed file exists', () => {
-  const manifest = validateManifest(JSON.parse(fs.readFileSync(path.join(publicDir, 'sample-data', 'profiles.json'), 'utf8')));
+  const manifest = validateManifest(JSON.parse(fs.readFileSync(path.join(publicDir, 'data', 'profiles.json'), 'utf8')));
   assert.ok(manifest.profiles.length >= 1);
   for (const p of manifest.profiles) {
-    for (const f of p.files) assert.ok(fs.existsSync(path.join(publicDir, 'sample-data', ...f.split('/'))), `${f} is missing`);
+    for (const f of p.files) assert.ok(fs.existsSync(path.join(publicDir, 'data', ...f.split('/'))), `${f} is missing`);
   }
 });

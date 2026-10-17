@@ -1,3 +1,4 @@
+import { DATA_DIR } from '../lib/config.js';
 import { Card, SectionTitle, StatusPill, TrendText, fmtDate } from './ui.jsx';
 import TrendChart from './TrendChart.jsx';
 
@@ -17,7 +18,7 @@ export default function Trends({ model, open }) {
       {!multi && (
         <Card className="note-card">
           <strong>Baseline measurement — additional results are needed to establish a trend.</strong>
-          <p className="small">These are {model.profile.name}'s first results on file. Add earlier or later reports in the Add Report tab and charts appear here automatically. No historical values are invented.</p>
+          <p className="small">These are {model.profile.name}'s first results on file. Add earlier or later reports in the Add Report tab, or add files under <code>public/{DATA_DIR}/</code> and list them in <code>profiles.json</code>; charts appear here automatically. No historical values are invented.</p>
         </Card>
       )}
       <div className="trend-grid">

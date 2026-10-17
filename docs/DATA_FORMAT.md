@@ -1,27 +1,16 @@
 # Data format
 
-## Where data comes from
+## Data folder
 
-1. **Reports added in the app** (the default). Each report is parsed in the browser. The person is matched by
-   the name printed on it, or a new profile is created. Profiles and reports are saved in localStorage.
-2. **Bundled files** (optional). Set `VITE_DATA_DIR` to a folder under `public/` that contains a
-   `profiles.json` and the files it lists. Those profiles are loaded on every start.
-3. **Sample data**. `public/sample-data/` uses the same layout and is shown only when the viewer asks for it.
+The app reads from `public/<VITE_DATA_DIR>/` (default `public/data/`):
 
 ```text
-public/local-data/
+public/data/
   profiles.json
   jane-doe/2025-03-12.csv
   jane-doe/2025-09-18.json
   ...
 ```
-
-## Profiles created in the app
-
-Stored under the localStorage key `health-insights.profiles.v1` as `{ id, name, match, created_at }`. The id is
-derived from the name (`"DOE, JOHN"` becomes `John Doe` with id `john-doe`; duplicates get `-2`, `-3`). The
-printed name is kept in `match` so later reports with the same name are suggested for that profile.
-Deleting a profile also deletes the reports saved for it.
 
 ## profiles.json
 
@@ -40,7 +29,7 @@ Deleting a profile also deletes the reports saved for it.
 
 | Field | Required | Description |
 |---|---|---|
-| `id` | yes | Unique, lowercase letters, digits, `-` or `_`. `unassigned` is reserved and ids starting with `sample-` are used by the sample data. Must equal `profile_id` in the records. |
+| `id` | yes | Unique, lowercase letters, digits, `-` or `_`. `unassigned` is reserved. Must equal `profile_id` in the records. |
 | `name` | yes | Display name. |
 | `files` | no | Paths relative to the data folder. JSON or CSV. May be empty. |
 | `match` | no | Names as printed on lab reports. Used only to suggest a profile when a PDF is added. |

@@ -1,7 +1,7 @@
 // End-to-end checks on a data folder: every record is accounted for, lab ranges are preserved,
 // status matches the lab flags, and profiles never mix.
 //
-// Usage: npm run verify [-- <folder under public/>]   (defaults to VITE_DATA_DIR, then "sample-data")
+// Usage: npm run verify [-- <folder under public/>]   (defaults to VITE_DATA_DIR, then "data")
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ import { resolveDataDir } from '../src/lib/config.js';
 import { validateManifest } from '../src/lib/manifest.js';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dataDir = resolveDataDir(process.argv[2] || process.env.VITE_DATA_DIR) || 'sample-data';
+const dataDir = resolveDataDir(process.argv[2] || process.env.VITE_DATA_DIR);
 const root = path.join(projectRoot, 'public', ...dataDir.split('/'));
 
 let failures = 0;

@@ -3,11 +3,9 @@ import { Card, SectionTitle, fmtDate } from './ui.jsx';
 import { parseReportLines, suggestProfile, toLabRecords } from '../lib/reportParser.js';
 import { extractRawRecords, resolveMarker, normalizeProfileData, computeStatus, referenceRule } from '../lib/normalize.js';
 import { loadProfileFiles, uploadedFilesFor } from '../lib/loadData.js';
-import { saveReport, deleteReport, saveProfile, newId } from '../lib/storage.js';
-import { createProfile, displayNameFromReport } from '../lib/profiles.js';
+import { saveReport, deleteReport, newId } from '../lib/storage.js';
 
 const UNASSIGNED = 'unassigned';
-const NEW_PROFILE = '__new__';
 
 /** Reads one file into a draft: rows to review + what the report says about whose it is. */
 async function readFile(file) {
@@ -29,7 +27,7 @@ async function readFile(file) {
   const dates = raw.map((r) => r.collection_date).filter(Boolean).sort();
   return {
     kind: /\.csv$/i.test(name) ? 'CSV' : 'JSON', fileName: name,
-    patientName: raw.find((r) => r.profile_name)?.profile_name || ids[0] || null, fileProfileId: ids[0] || null,
+    patientName: ids[0] || null, fileProfileId: ids[0] || null,
     collectionDate: dates[dates.length - 1] || null, laboratory: raw.find((r) => r.laboratory_name)?.laboratory_name || null,
     reports: [...new Set(raw.map((r) => r.report).filter(Boolean))], fasting: false,
     rows: raw.map((r) => {
@@ -46,15 +44,14 @@ async function readFile(file) {
   };
 }
 
-function useProfileRecords(profiles, reports) {
+function useProfileRecords(manifest, reports) {
   const cache = React.useRef({});
   const [, force] = React.useState(0);
   const get = (pid) => {
     if (!pid || pid === UNASSIGNED) return [];
     if (cache.current[pid]?.reportsRef === reports) return cache.current[pid].records;
     if (!cache.current[pid]?.loading) {
-      const entry = profiles.find((p) => p.id === pid);
-      if (!entry) return [];
+      const entry = manifest.profiles.find((p) => p.id === pid);
       cache.current[pid] = { loading: true, records: cache.current[pid]?.records || [] };
       loadProfileFiles(entry).then((files) => {
         const d = normalizeProfileData({ id: entry.id, name: entry.name }, [...files, ...uploadedFilesFor(entry.id, reports)]);
@@ -71,26 +68,16 @@ function useProfileRecords(profiles, reports) {
   return get;
 }
 
-/** Who a new draft should go to: the matching profile, a new profile named after the report, or the profile on screen. */
-function defaultOwner(draft, profiles, currentProfileId) {
-  const byId = draft.fileProfileId && profiles.some((p) => p.id === draft.fileProfileId) ? draft.fileProfileId : null;
-  const suggested = byId || suggestProfile(draft.patientName, profiles);
-  if (suggested) return { suggested, pid: suggested };
-  if (draft.patientName || !profiles.length) return { suggested: null, pid: NEW_PROFILE };
-  return { suggested: null, pid: currentProfileId && profiles.some((p) => p.id === currentProfileId) ? currentProfileId : NEW_PROFILE };
-}
-
-function DraftCard({ draft, profiles, currentProfileId, profileRecords, onSaved, onDiscard }) {
-  const [{ suggested, pid: initialPid }] = React.useState(() => defaultOwner(draft, profiles, currentProfileId));
-  const [pid, setPid] = React.useState(initialPid);
-  const [newName, setNewName] = React.useState(displayNameFromReport(draft.patientName));
+function DraftCard({ draft, manifest, profileRecords, onSaved, onDiscard }) {
+  const suggested = draft.fileProfileId && manifest.profiles.some((p) => p.id === draft.fileProfileId)
+    ? draft.fileProfileId : suggestProfile(draft.patientName, manifest.profiles);
+  const [pid, setPid] = React.useState(suggested || UNASSIGNED);
   const [date, setDate] = React.useState(draft.collectionDate || '');
   const [rows, setRows] = React.useState(draft.rows);
   const [confirmMismatch, setConfirmMismatch] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [err, setErr] = React.useState(null);
-  const profile = profiles.find((p) => p.id === pid);
-  const creating = pid === NEW_PROFILE;
+  const profile = manifest.profiles.find((p) => p.id === pid);
   const existing = profileRecords(pid);
 
   // Fill a missing range from this same person's earlier result for the same test and unit (clearly labeled).
@@ -99,22 +86,18 @@ function DraftCard({ draft, profiles, currentProfileId, profileRecords, onSaved,
     const prev = [...existing].reverse().find((x) => x.marker_id === r.marker_id && (x.unit || '') === (r.unit || '') && x.reference_rule);
     return prev ? { ...r, reference_low: prev.reference_low, reference_high: prev.reference_high, reference_rule: prev.reference_rule, range_source: 'previous report' } : r;
   });
-  const mismatch = draft.patientName && profile && suggested && suggested !== pid;
-  const unknownOwner = profile && !suggested;
+  const mismatch = draft.patientName && pid !== UNASSIGNED && suggested && suggested !== pid;
+  const unknownOwner = pid !== UNASSIGNED && !suggested;
   const dupCount = view.filter((r) => r.include && existing.some((x) => x.marker_id === r.marker_id && x.collection_date === (r.collection_date || date) && String(x.value) === String(r.value))).length;
   const set = (i, k, v) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
   const num = (v) => (v === '' ? '' : isNaN(Number(v)) ? v : Number(v));
   const included = view.filter((r) => r.include);
-  const canSave = included.length && date && (!creating || newName.trim()) && (!mismatch || confirmMismatch) && (!unknownOwner || confirmMismatch);
+  const canSave = included.length && date && (!mismatch || confirmMismatch) && (!unknownOwner || confirmMismatch);
 
   const save = async () => {
     setSaving(true); setErr(null);
     try {
-      let target = profile || { id: UNASSIGNED, name: 'Unassigned' };
-      if (creating) {
-        target = createProfile(newName, { match: [draft.patientName], existingIds: profiles.map((p) => p.id) });
-        await saveProfile(target);
-      }
+      const target = profile || { id: UNASSIGNED, name: 'Unassigned' };
       const records = toLabRecords(view, { profile: target, collectionDate: date, laboratory: draft.laboratory, source: `Uploaded Lab Report (${draft.kind})`, fasting: draft.fasting });
       await saveReport({
         id: newId(), profile_id: target.id, file_name: draft.fileName, uploaded_at: new Date().toISOString(),
@@ -143,22 +126,14 @@ function DraftCard({ draft, profiles, currentProfileId, profileRecords, onSaved,
         <label><div className="label">Collection date</div><input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></label>
         <label><div className="label">Whose report is this?</div>
           <select value={pid} onChange={(e) => { setPid(e.target.value); setConfirmMismatch(false); }}>
-            <option value={NEW_PROFILE}>New person…</option>
-            {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}{p.id === suggested ? ' (matches name on report)' : ''}</option>)}
+            {manifest.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}{p.id === suggested ? ' (matches name on report)' : ''}</option>)}
             <option value={UNASSIGNED}>Unassigned (decide later, not analyzed)</option>
           </select>
         </label>
-        {creating && (
-          <label><div className="label">New person&apos;s name</div>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Name for this profile" aria-label="New person's name" />
-          </label>
-        )}
       </div>
-      {creating && <p className="note small">A new profile{newName.trim() ? ` for ${newName.trim()}` : ''} will be created with this report. You can rename or delete it later under Sources.</p>}
-      {creating && !newName.trim() && <p className="warn">Enter a name for the new profile.</p>}
 
       {mismatch && (
-        <label className="warn"><input type="checkbox" checked={confirmMismatch} onChange={(e) => setConfirmMismatch(e.target.checked)} /> The name on this report matches {profiles.find((p) => p.id === suggested)?.name}, not {profile?.name}. Tick to confirm it really belongs to {profile?.name}.</label>
+        <label className="warn"><input type="checkbox" checked={confirmMismatch} onChange={(e) => setConfirmMismatch(e.target.checked)} /> The name on this report matches {manifest.profiles.find((p) => p.id === suggested)?.name}, not {profile?.name}. Tick to confirm it really belongs to {profile?.name}.</label>
       )}
       {unknownOwner && !mismatch && (
         <label className="warn"><input type="checkbox" checked={confirmMismatch} onChange={(e) => setConfirmMismatch(e.target.checked)} /> The report does not show a name that matches {profile?.name}. Tick to confirm it belongs to {profile?.name}, or choose Unassigned.</label>
@@ -196,7 +171,7 @@ function DraftCard({ draft, profiles, currentProfileId, profileRecords, onSaved,
       {err && <p className="warn">{err}</p>}
       <div className="draft-actions">
         <button className="btn" disabled={!canSave || saving} onClick={save}>
-          {saving ? 'Saving…' : pid === UNASSIGNED ? `Save ${included.length} results as unassigned` : creating ? `Create ${newName.trim() || 'profile'} and add ${included.length} results` : `Add ${included.length} results to ${profile?.name}`}
+          {saving ? 'Saving…' : pid === UNASSIGNED ? `Save ${included.length} results as unassigned` : `Add ${included.length} results to ${profile?.name}`}
         </button>
         <span className="muted small">Check the values against your report before saving.</span>
       </div>
@@ -204,7 +179,7 @@ function DraftCard({ draft, profiles, currentProfileId, profileRecords, onSaved,
   );
 }
 
-export default function AddReport({ profiles, currentProfileId, reports, onChange, showProfile }) {
+export default function AddReport({ manifest, reports, onChange, go, setProfileId }) {
   const [drafts, setDrafts] = React.useState([]);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState(null);
@@ -212,7 +187,7 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
   const [pendingDelete, setPendingDelete] = React.useState(null);
   const [assignTo, setAssignTo] = React.useState({});
   const [drag, setDrag] = React.useState(false);
-  const profileRecords = useProfileRecords(profiles, reports);
+  const profileRecords = useProfileRecords(manifest, reports);
 
   const handleFiles = async (files) => {
     setBusy(true); setMsg(null); setErrors([]);
@@ -224,11 +199,8 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
   };
 
   const onSaved = (key) => async (profile, n) => {
-    const remaining = drafts.filter((x) => x.key !== key);
-    setDrafts(remaining);
+    setDrafts((d) => d.filter((x) => x.key !== key));
     await onChange();
-    // With nothing else left to review, go straight to the dashboard the report was added to.
-    if (profile.id !== UNASSIGNED && !remaining.length) { showProfile(profile.id); return; }
     setMsg(profile.id === UNASSIGNED
       ? { text: `Saved ${n} results as unassigned. They are not analyzed until you assign them below.` }
       : { text: `Added ${n} results to ${profile.name}'s dashboard. Every tab now includes them.`, profile });
@@ -236,13 +208,9 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
 
   const assign = async (r) => {
     const pid = assignTo[r.id];
-    let p = profiles.find((x) => x.id === pid);
+    const p = manifest.profiles.find((x) => x.id === pid);
+    if (!p) return;
     try {
-      if (pid === NEW_PROFILE) {
-        p = createProfile(displayNameFromReport(r.patient_name) || r.file_name.replace(/\.[^.]+$/, ''), { match: [r.patient_name], existingIds: profiles.map((x) => x.id) });
-        await saveProfile(p);
-      }
-      if (!p) return;
       await saveReport({ ...r, profile_id: p.id, records: r.records.map((x) => ({ ...x, profile_id: p.id, profile_name: p.name })) });
     } catch (e) {
       setErrors([`Could not assign ${r.file_name}: ${e.message}`]);
@@ -260,7 +228,7 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
     setPendingDelete(null);
     await onChange();
   };
-  const nameOf = (pid) => profiles.find((p) => p.id === pid)?.name || 'Unassigned';
+  const nameOf = (pid) => manifest.profiles.find((p) => p.id === pid)?.name || 'Unassigned';
   const sorted = [...reports].sort((a, b) => String(b.uploaded_at).localeCompare(String(a.uploaded_at)));
 
   return (
@@ -279,16 +247,16 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
       {msg && (
         <div className="success">
           <span>✅ {msg.text}</span>
-          {msg.profile && msg.profile.id !== UNASSIGNED && <button className="btn" onClick={() => showProfile(msg.profile.id)}>View {msg.profile.name}'s overview</button>}
+          {msg.profile && msg.profile.id !== UNASSIGNED && <button className="btn" onClick={() => { setProfileId(msg.profile.id); go('overview'); }}>View {msg.profile.name}'s overview</button>}
         </div>
       )}
 
       {drafts.map((d) => (
-        <DraftCard key={d.key} draft={d} profiles={profiles} currentProfileId={currentProfileId} profileRecords={profileRecords} onSaved={onSaved(d.key)} onDiscard={() => setDrafts((x) => x.filter((y) => y.key !== d.key))} />
+        <DraftCard key={d.key} draft={d} manifest={manifest} profileRecords={profileRecords} onSaved={onSaved(d.key)} onDiscard={() => setDrafts((x) => x.filter((y) => y.key !== d.key))} />
       ))}
 
       <SectionTitle title="Reports added in the app" sub="Saved in this browser on this device only. Clearing site data removes them." />
-      {!sorted.length ? <p className="muted">No reports added yet.</p> : (
+      {!sorted.length ? <p className="muted">No reports added yet. Bundled reports are listed under Sources.</p> : (
         <div className="table-wrap">
           <table className="table">
             <thead><tr><th>File</th><th>Profile</th><th>Collected</th><th>Results</th><th>Added</th><th></th></tr></thead>
@@ -302,8 +270,7 @@ export default function AddReport({ profiles, currentProfileId, reports, onChang
                         <span className="pill sev-na">Unassigned</span>
                         <select value={assignTo[r.id] || ''} onChange={(e) => setAssignTo((a) => ({ ...a, [r.id]: e.target.value }))} aria-label="Assign to">
                           <option value="">Assign to…</option>
-                          <option value={NEW_PROFILE}>New person{r.patient_name ? ` (${displayNameFromReport(r.patient_name)})` : ''}</option>
-                          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          {manifest.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                         <button className="btn-ghost" disabled={!assignTo[r.id]} onClick={() => assign(r)}>Assign</button>
                       </div>
