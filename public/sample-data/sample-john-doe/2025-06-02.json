@@ -1,7 +1,7 @@
 {
   "records": [
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "WBC",
@@ -17,7 +17,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "RBC",
@@ -33,7 +33,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "Hemoglobin",
@@ -49,7 +49,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "Hematocrit",
@@ -65,7 +65,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "MCV",
@@ -81,7 +81,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Blood/CBC",
       "test_name": "Platelets",
@@ -97,7 +97,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Liver",
       "test_name": "ALT",
@@ -113,7 +113,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Liver",
       "test_name": "AST",
@@ -129,7 +129,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Liver",
       "test_name": "ALP",
@@ -145,7 +145,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Liver",
       "test_name": "GGT",
@@ -161,7 +161,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Kidney",
       "test_name": "Creatinine",
@@ -177,7 +177,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Kidney",
       "test_name": "eGFR",
@@ -193,7 +193,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Kidney",
       "test_name": "BUN",
@@ -209,7 +209,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Diabetes/Glucose",
       "test_name": "HbA1c",
@@ -225,7 +225,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Diabetes/Glucose",
       "test_name": "Fasting glucose",
@@ -241,7 +241,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Vitamins/Minerals",
       "test_name": "Vitamin B12",
@@ -257,7 +257,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Other",
       "test_name": "Uric acid",
@@ -273,7 +273,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "Total cholesterol",
@@ -289,7 +289,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "LDL cholesterol",
@@ -305,7 +305,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "HDL cholesterol",
@@ -321,7 +321,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "john-doe",
+      "profile_id": "sample-john-doe",
       "profile_name": "John Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "Triglycerides",

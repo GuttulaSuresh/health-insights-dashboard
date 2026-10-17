@@ -16,7 +16,7 @@ Node.js 20.19+ or 22.13+ is required. The same commands work in PowerShell, Comm
 ## Health data
 
 Never commit, attach or paste real lab results, reports or screenshots that show them, in code, tests, issues or
-pull requests. Use the synthetic profiles in `public/data/` or invent new values. `.gitignore` excludes
+pull requests. Use the synthetic profiles in `public/sample-data/` or invent new values. `.gitignore` excludes
 `public/local-data/` and PDF files for this reason.
 
 ## Branches

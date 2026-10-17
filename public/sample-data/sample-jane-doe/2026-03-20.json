@@ -1,7 +1,7 @@
 {
   "records": [
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "WBC",
@@ -17,7 +17,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "RBC",
@@ -33,7 +33,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "Hemoglobin",
@@ -49,7 +49,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "Hematocrit",
@@ -65,7 +65,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "MCV",
@@ -81,7 +81,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Blood/CBC",
       "test_name": "Platelets",
@@ -97,7 +97,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Diabetes/Glucose",
       "test_name": "Fasting glucose",
@@ -113,7 +113,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Diabetes/Glucose",
       "test_name": "HbA1c",
@@ -129,7 +129,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "Total cholesterol",
@@ -145,7 +145,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "LDL cholesterol",
@@ -161,7 +161,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "HDL cholesterol",
@@ -177,7 +177,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Cholesterol/Cardiovascular",
       "test_name": "Triglycerides",
@@ -193,7 +193,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Thyroid",
       "test_name": "TSH",
@@ -209,7 +209,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Thyroid",
       "test_name": "Free T4",
@@ -225,7 +225,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Vitamins/Minerals",
       "test_name": "Vitamin D, 25-OH",
@@ -241,7 +241,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Vitamins/Minerals",
       "test_name": "Vitamin B12",
@@ -257,7 +257,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Vitamins/Minerals",
       "test_name": "Ferritin",
@@ -273,7 +273,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Kidney",
       "test_name": "Creatinine",
@@ -289,7 +289,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Vitamins/Minerals",
       "test_name": "Calcium",
@@ -305,7 +305,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Kidney",
       "test_name": "eGFR",
@@ -321,7 +321,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Kidney",
       "test_name": "BUN",
@@ -337,7 +337,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Electrolytes",
       "test_name": "Sodium",
@@ -353,7 +353,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Electrolytes",
       "test_name": "Potassium",
@@ -369,7 +369,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Liver",
       "test_name": "ALT",
@@ -385,7 +385,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Liver",
       "test_name": "AST",
@@ -401,7 +401,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Liver",
       "test_name": "ALP",
@@ -417,7 +417,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Liver",
       "test_name": "Albumin",
@@ -433,7 +433,7 @@
       "notes": "Synthetic sample data for demonstration only."
     },
     {
-      "profile_id": "jane-doe",
+      "profile_id": "sample-jane-doe",
       "profile_name": "Jane Doe",
       "category": "Liver",
       "test_name": "Bilirubin, total",
